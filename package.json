@@ -1,0 +1,28 @@
+{
+  "name": "drop-in-integration",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "server": "export $(cat .env | xargs) && nodemon -L server.js",
+    "client": "npm start --prefix client",
+    "dev": "npm run server"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@adyen/adyen-web": "^5.29.0",
+    "@adyen/api-library": "^12.0.0",
+    "axios": "^0.26.1",
+    "body-parser": "^1.20.0",
+    "concurrently": "^7.1.0",
+    "cors": "^2.8.5",
+    "crypto": "^1.0.1",
+    "express": "^4.17.3",
+    "nodemailer": "^6.7.7"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.15"
+  }
+}
