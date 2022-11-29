@@ -259,7 +259,10 @@ async function startCheckoutByPaymentMethods() {
 
         AdyenCheckout(configuration)
           .then((checkout) => {
-            const dropinComponent = checkout.create(integrationType).mount('#dropin-container');
+            const dropinComponent = checkout.create(integrationType, {
+                //... other optional configuration
+                instantPaymentTypes: ['applepay']
+            }).mount('#dropin-container');
           });
       } else {
         console.log("Failed to create a drop-in session")
