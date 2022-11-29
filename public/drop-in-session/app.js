@@ -72,6 +72,13 @@ function handleServerResponse(res, component) {
   }
 }
 
+const applePayConfiguration = {
+    amount: {
+        value: 1000,
+        currency: "HKD"
+    },
+    countryCode: "HK"
+};
 
 const configuration = {
   environment: 'test', // Change to 'live' for the live environment.
@@ -167,6 +174,7 @@ const configuration = {
     dropinComponent.resolve()
   },
   paymentMethodsConfiguration: {
+    applepay: applePayConfiguration,
     card: {
       amount: null,
       enableStoreDetails: true,
@@ -308,7 +316,7 @@ async function finalizeCheckout() {
     submitPaymentDetails({
       'redirectResult': redirectResult
     })
-
+    // The purpose to submit payment details after redirect is to get the resultCode
   } catch (error) {
     console.error(error);
     alert("Error occurred. Look at console for details");
