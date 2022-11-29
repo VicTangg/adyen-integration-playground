@@ -5,7 +5,7 @@ const url_domain = location.protocol + '//' + location.host;
 
 // Used to finalize a checkout call in case of redirect
 const urlParams = new URLSearchParams(window.location.search);
-const sessionId = urlParams.get('sessionId'); // Unique identifier for the payment session
+var sessionId = urlParams.get('sessionId'); // Unique identifier for the payment session
 const redirectResult = urlParams.get('redirectResult');
 
 
@@ -106,12 +106,20 @@ const configuration = {
     id: '', // Unique identifier for the payment session.
     sessionData: '' // The payment session data.
   },
+  onAdditionalDetails: (state, component) => {
+    console.log(state)
+    console.log("on Additional Details triggered")
+    submitPaymentDetails(state.details)
+     //  Your function calling your server to make a `/payments/details` request
+  },
   onSubmit: (state, component) => {
     console.log(state)
 
     var payload = {}
     payload['paymentMethod'] = state['data']['paymentMethod']
     payload['amount'] = paymentAmountElement.innerHTML + '0'
+    // payload['returnUrl'] = url_domain + '/component'
+    payload['returnUrl'] = url_domain + '/component?sessionId=' + sessionId
 
     console.log(payload)
 
@@ -129,15 +137,11 @@ const configuration = {
         console.log(data)
         if (data['success'] === true) {
           // Deal with payment result here
-          handleServerResponse(data['apiResponse'], null);
+          handleServerResponse(data['apiResponse'], component);
         } else {
           console.log("Failed to make a payment")
         }
       })
-
-
-
-
 
 
      //  Your function calling your server to make a `/payments` request
@@ -220,6 +224,7 @@ async function startCheckout() {
       if (data['success'] === true) {
         // Load the drop-in here
         configuration['session']['id'] = data['apiResponse']['id']
+        sessionId = data['apiResponse']['id']
         configuration['session']['sessionData'] = data['apiResponse']['sessionData']
         AdyenCheckout(configuration)
           .then((checkout) => {
@@ -247,8 +252,9 @@ async function createAdyenCheckout(session) {
 async function finalizeCheckout() {
   try {
     // Create AdyenCheckout re-using existing Session
+    console.log('Redirect result with session ID, checkout component submit details')
     const checkout = await createAdyenCheckout({ id: sessionId });
-
+    console.log('submitted')
     // Submit the extracted redirectResult (to trigger onPaymentCompleted() handler)
     checkout.submitDetails({ details: { redirectResult } });
   } catch (error) {
@@ -258,10 +264,80 @@ async function finalizeCheckout() {
 }
 
 
-if (!sessionId) {
-  startCheckout();
+async function submitPaymentDetails(details) {
+  var payload = {}
+  payload['details'] = details
+
+  console.log(payload)
+
+
+  fetch(url_domain + "/api/checkout/payments/details",
+    {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload)
+    })
+    .then(response => response.json())
+    .then(function (data) {
+      console.log(data)
+      if (data['success'] === true) {
+        // Deal with payment result here
+        console.log('Payment details submitted successfully')
+        wait(2000)
+        handleServerResponse(data['apiResponse'], null);
+      } else {
+        console.log("Failed to submit payment details")
+      }
+    })
 }
-else {
+
+
+// Some payment methods use redirects. This is where we finalize the operation
+async function fianlizeCheckoutWithoutSessionId() {
+  try {
+    // Create AdyenCheckout re-using existing Session
+    console.log('Redirect result with NO session ID, call payments details API')
+
+    submitPaymentDetails({
+      'redirectResult': redirectResult
+    })
+
+  } catch (error) {
+    console.error(error);
+    alert("Error occurred. Look at console for details");
+  }
+}
+
+
+
+function wait(ms){
+   var start = new Date().getTime();
+   var end = start;
+   while(end < start + ms) {
+     end = new Date().getTime();
+  }
+}
+
+
+if (!sessionId && redirectResult){
+  fianlizeCheckoutWithoutSessionId();
+} else if (sessionId && redirectResult){
+  wait(2000)
   // existing session: complete Checkout
   finalizeCheckout();
+} else {
+  startCheckout();
 }
+
+
+
+
+// if (redirectResult || sessionId){
+//   // if no session id after redirect
+//   finalizeCheckout();
+// } else if (!sessionId) {
+//   // if no sessionId
+//   startCheckout();
+// }

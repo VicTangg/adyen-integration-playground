@@ -1,13 +1,13 @@
 .adyen-checkout__payment-method {
     /* Payment method container */
     background: #f9fafa;
-    border: none;
+    /* border: none; */
 }
 
 .adyen-checkout__payment-method--selected {
     /* Payment method that has been selected */
     background: #f9fafa;
-    border: none;
+    /* border: none; */
 }
 .adyen-checkout__payment-method__header {
     /* Payment method icon and name */

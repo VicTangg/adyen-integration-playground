@@ -11,6 +11,25 @@ const sessionId = urlParams.get('sessionId'); // Unique identifier for the payme
 const redirectResult = urlParams.get('redirectResult');
 
 
+// HTML Elements
+var promotionTextElement = document.getElementById("promotionText");
+var paymentAmountElement = document.getElementById("paymentAmount");
+var shoppingCartAmountElement = document.getElementById("shoppingCartAmount");
+
+
+// Detected Card information
+var detectedCard = {
+  brand: '',
+  bin: ''
+}
+
+
+async function updatePromotionText(appliedDiscount, promotionText) {
+  var discountedAmount = parseInt(shoppingCartAmountElement.innerHTML) * (100 - appliedDiscount) / 100
+  paymentAmountElement.innerHTML = discountedAmount
+  promotionTextElement.innerHTML = promotionText
+}
+
 var styleObject = {
   base: {
     color: 'purple',
@@ -60,10 +79,10 @@ const configuration = {
   analytics: {
     enabled: true // Set to false to not send analytics data to Adyen.
   },
-  session: {
-    id: '', // Unique identifier for the payment session.
-    sessionData: '' // The payment session data.
-  },
+  // session: {
+  //   id: '', // Unique identifier for the payment session.
+  //   sessionData: '' // The payment session data.
+  // },
   // styles: {
   //   base: {
   //     // "creditCard.holderName": "Name on card",
@@ -88,6 +107,8 @@ const configuration = {
   // },
   onPaymentCompleted: (result, component) => {
       console.info(result, component);
+      console.log('onPaymentCompleted')
+      wait(2000)
       handleServerResponse(result, component);
 
   },
@@ -102,18 +123,48 @@ const configuration = {
   showStoredPaymentMethods: true,
   // Any payment method specific configuration. Find the configuration specific to each payment method:  https://docs.adyen.com/payment-methods
   // For example, this is 3D Secure configuration for cards:
-  translations: {
-    "zh_HK": {
-      "creditCard.numberField.title": "尊貴客人的卡號",
-      "payButton": "卑錢啦",
-      "creditCard.holderName.placeholder": "陳大文",
-      "creditCard.cvcField.title": "安全碼",
-      "creditCard.expiryDateField.placeholder": "月月/年年",
-      "creditCard.cvcField.placeholder.3digits": "999",
-      "creditCard.cvcField.placeholder.4digits": "8888",
-      "creditCard.numberField.placeholder": "4111 2333 4242 5123",
-      "creditCard.holderName": "尊貴客人的名字"
-    }
+  onSubmit: (state, component) => {
+    console.log(state)
+
+    var payload = {}
+    payload['paymentMethod'] = state['data']['paymentMethod']
+    payload['amount'] = paymentAmountElement.innerHTML + '0'
+    // payload['returnUrl'] = url_domain + '/component'
+    payload['returnUrl'] = url_domain + '/?type=dropin'
+
+    console.log(payload)
+
+
+    fetch(url_domain + "/api/checkout/payments",
+      {
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      })
+      .then(response => response.json())
+      .then(function (data) {
+        console.log(data)
+        if (data['success'] === true) {
+          // Deal with payment result here
+          handleServerResponse(data['apiResponse'], component);
+        } else {
+          console.log("Failed to make a payment")
+        }
+      })
+     //  Your function calling your server to make a `/payments` request
+  },
+  onAdditionalDetails: (state, component) => {
+    console.log(state)
+    console.log("on Additional Details triggered")
+    submitPaymentDetails(state.details)
+     //  Your function calling your server to make a `/payments/details` request
+  },
+  showRemovePaymentMethodButton: true,
+  onDisableStoredPaymentMethod: (storedPaymentMethodId, resolve, reject) => {
+    console.log(storedPaymentMethodId)
+    dropinComponent.resolve()
   },
   paymentMethodsConfiguration: {
     card: {
@@ -127,12 +178,37 @@ const configuration = {
       onBrand: function(brand){
         console.log(brand)
       },
-      onBinValue: function(bin){
-          console.log(bin)
+      onBrand: function(brand){
+        console.log('Brand information')
+        console.log(brand)
+        detectedCard['brand'] = brand['brand']
+        var promotionDetails = applyCardDiscount(detectedCard)
+        updatePromotionText(
+          promotionDetails['appliedDiscount'], promotionDetails['promotionText']
+        )
       },
-      onBinLookup: function(callbackObj) {
-        console.log(callbackObj)
-      }
+      onBinValue: function(bin){
+        console.log(bin)
+        detectedCard['bin'] = bin['binValue']
+        var promotionDetails = applyCardDiscount(detectedCard)
+        updatePromotionText(
+          promotionDetails['appliedDiscount'], promotionDetails['promotionText']
+        )
+      },
+    }
+  },
+  locale: "zh_HK",
+  translations: {
+    "zh_HK": {
+      "creditCard.numberField.title": "尊貴客人的卡號",
+      "payButton": "卑錢啦",
+      "creditCard.holderName.placeholder": "陳大文",
+      "creditCard.cvcField.title": "安全碼",
+      "creditCard.expiryDateField.placeholder": "月月/年年",
+      "creditCard.cvcField.placeholder.3digits": "999",
+      "creditCard.cvcField.placeholder.4digits": "8888",
+      "creditCard.numberField.placeholder": "4111 2333 4242 5123",
+      "creditCard.holderName": "尊貴客人的名字"
     }
   }
 };
@@ -151,12 +227,106 @@ json(`https://api.ipdata.co?api-key=${myIPDataKey}`).then(data => {
 
 var cardholderIP;
 
-function loadDropin() {
+
+// Load the drop-in
+async function startCheckoutByPaymentMethods() {
+
+  // Create a drop-in session
+  var payload = {}
+
+  fetch(url_domain + "/api/checkout/paymentMethods",
+    {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload)
+    })
+    .then(response => response.json())
+    .then(function (data) {
+      console.log(data)
+      if (data['success'] === true) {
+        // Load the drop-in here
+        configuration['paymentMethodsResponse'] = data['apiResponse']
+
+        AdyenCheckout(configuration)
+          .then((checkout) => {
+            const dropinComponent = checkout.create(integrationType).mount('#dropin-container');
+          });
+      } else {
+        console.log("Failed to create a drop-in session")
+      }
+    })
 
 }
 
+
+async function createAdyenCheckout(session) {
+
+  configuration['session'] = session
+
+  return new AdyenCheckout(configuration);
+}
+
+
+async function submitPaymentDetails(details) {
+  var payload = {}
+  payload['details'] = details
+
+  console.log(payload)
+
+
+  fetch(url_domain + "/api/checkout/payments/details",
+    {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload)
+    })
+    .then(response => response.json())
+    .then(function (data) {
+      console.log(data)
+      if (data['success'] === true) {
+        // Deal with payment result here
+        console.log('Payment details submitted successfully')
+        wait(2000)
+        handleServerResponse(data['apiResponse'], null);
+      } else {
+        console.log("Failed to submit payment details")
+      }
+    })
+}
+
+
+// Some payment methods use redirects. This is where we finalize the operation
+async function finalizeCheckout() {
+  try {
+    // Create AdyenCheckout re-using existing Session
+    console.log('Redirect result with NO session ID, call payments details API')
+
+    submitPaymentDetails({
+      'redirectResult': redirectResult
+    })
+
+  } catch (error) {
+    console.error(error);
+    alert("Error occurred. Look at console for details");
+  }
+}
+
+
+function wait(ms){
+   var start = new Date().getTime();
+   var end = start;
+   while(end < start + ms) {
+     end = new Date().getTime();
+  }
+}
+
+
 // Load the drop-in
-async function startCheckout() {
+async function startCheckoutBySession() {
 
   // Create a drop-in session
   var payload = {}
@@ -174,14 +344,13 @@ async function startCheckout() {
       console.log(data)
       if (data['success'] === true) {
         // Load the drop-in here
+        configuration['session'] = {}
         configuration['session']['id'] = data['apiResponse']['id']
         configuration['session']['sessionData'] = data['apiResponse']['sessionData']
         AdyenCheckout(configuration)
           .then((checkout) => {
             const dropinComponent = checkout.create(integrationType).mount('#dropin-container');
-            checkout.submit()
           });
-
       } else {
         console.log("Failed to create a drop-in session")
       }
@@ -190,33 +359,13 @@ async function startCheckout() {
 }
 
 
-async function createAdyenCheckout(session) {
-
-  configuration['session'] = session
-
-  return new AdyenCheckout(configuration);
-}
-
-
-// Some payment methods use redirects. This is where we finalize the operation
-async function finalizeCheckout() {
-  try {
-    // Create AdyenCheckout re-using existing Session
-    const checkout = await createAdyenCheckout({ id: sessionId });
-
-    // Submit the extracted redirectResult (to trigger onPaymentCompleted() handler)
-    checkout.submitDetails({ details: { redirectResult } });
-  } catch (error) {
-    console.error(error);
-    alert("Error occurred. Look at console for details");
-  }
-}
-
-
-if (!sessionId) {
-  startCheckout();
+if (!redirectResult) {
+  // startCheckoutBySession();
+  startCheckoutByPaymentMethods();
 }
 else {
+  wait(2000)
+  console.log('From redirect')
   // existing session: complete Checkout
   finalizeCheckout();
 }
