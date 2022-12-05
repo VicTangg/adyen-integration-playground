@@ -8,7 +8,9 @@ const { Console } = require('console');
 
 var myXAPIKey = process.env.XAPIKEY;
 
-var urlEndpoint = 'https://checkout-test.adyen.com/v69/'
+var checkoutUrlEndpoint = 'https://checkout-test.adyen.com/v69/'
+var palUrlEndpoint = 'https://pal-test.adyen.com/pal/servlet/'
+
 
 router.get('/', (req, res) => {
   res.json("I'm good");
@@ -33,7 +35,7 @@ router.post('/sessions', (req, res) => {
 
   var config = {
     method: 'post',
-    url: urlEndpoint + 'sessions',
+    url: checkoutUrlEndpoint + 'sessions',
     headers: {
       'x-api-key': myXAPIKey,
       'Content-Type': 'application/json'
@@ -58,43 +60,42 @@ router.post('/sessions', (req, res) => {
 
 
 router.post('/payments', (req, res) => {
-  console.log(req.body)
+  console.log(Object.keys(req.body.data))
 
+  // Drop in pass in these values
+  // 'riskData',
+  // 'checkoutAttemptId',
+  // 'paymentMethod',
+  // 'billingAddress',
+  // 'storePaymentMethod',
+  // 'browserInfo',
+  // 'origin',
+  // 'clientStateDataIndicator'
 
-  var data = {
-    "merchantAccount": "AdyenTechSupport_VictorTang_TEST",
+  var data = req.body.data
 
-    // 3DS related
-    "browserInfo": {
-        "userAgent": "Mozilla\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/70.0.3538.110 Safari\/537.36",
-        "acceptHeader": "text\/html,application\/xhtml+xml,application\/xml;q=0.9,image\/webp,image\/apng,*\/*;q=0.8",
-        "language": "nl-NL",
-        "colorDepth": 24,
-        "screenHeight": 723,
-        "screenWidth": 1536,
-        "timeZoneOffset": 0,
-        "javaEnabled": true
-    },
-    "authenticationData": {
-        "attemptAuthentication": "always",
-        "threeDSRequestData": {
-            "nativeThreeDS": "preferred"
-        }
-    },
-    "reference": "asdadassd",
-    "channel": "web",
-    "amount": {
-        "currency": "HKD",
-        "value": 100000
-        // "value": req.body.amount
-    },
-    "returnUrl": req.body.returnUrl,
-    "paymentMethod": req.body.paymentMethod
+  data["merchantAccount"] = "AdyenTechSupport_VictorTang_TEST"
+  data["shopperReference"] = req.body.shopperReference
+  data["authenticationData"] = {
+      "attemptAuthentication": "always",
+      "threeDSRequestData": {
+          "nativeThreeDS": "preferred"
+      }
   }
+  data['reference'] = "asddadsa"
+  data["returnUrl"] = req.body.returnUrl
+  // data["storePaymentMethod"] = true
+  data["amount"] = {
+      "currency": "HKD",
+      "value": 100000
+      // "value": req.body.amount
+  }
+  data["channel"] = "Web"
+
 
   var config = {
     method: 'post',
-    url: urlEndpoint + 'payments',
+    url: checkoutUrlEndpoint + 'payments',
     headers: {
       'x-api-key': myXAPIKey,
       'Content-Type': 'application/json'
@@ -120,11 +121,13 @@ router.post('/payments', (req, res) => {
 
 router.post('/paymentMethods', (req, res) => {
   var data = {
+    // "blockedPaymentMethods": ['scheme', 'alipay'],
+    // "splitCardFundingSources": true,
     "merchantAccount": "AdyenTechSupport_VictorTang_TEST",
     "countryCode": "HK",
     "shopperLocale": "zh_HK",
     "amount": {
-        "currency": "CNY",
+        "currency": "HKD",
         "value": 1800
     },
     "reference": "abc",
@@ -136,7 +139,7 @@ router.post('/paymentMethods', (req, res) => {
 
   var config = {
     method: 'post',
-    url: urlEndpoint + 'paymentMethods',
+    url: checkoutUrlEndpoint + 'paymentMethods',
     headers: {
       'x-api-key': myXAPIKey,
       'Content-Type': 'application/json'
@@ -161,16 +164,15 @@ router.post('/paymentMethods', (req, res) => {
 
 
 router.post('/payments/details', (req, res) => {
-  var data = {
-    "merchantAccount": "AdyenTechSupport_VictorTang_TEST",
-    "details": req.body.details
-  }
+  var data = req.body.data
 
-  console.log(data
-  )
+  data['merchantAccount'] = 'AdyenTechSupport_VictorTang_TEST'
+
+  console.log(data)
+
   var config = {
     method: 'post',
-    url: urlEndpoint + 'payments/details',
+    url: checkoutUrlEndpoint + 'payments/details',
     headers: {
       'x-api-key': myXAPIKey,
       'Content-Type': 'application/json'
@@ -192,5 +194,43 @@ router.post('/payments/details', (req, res) => {
       res.status(404).json({ 'success': false })
     });
 });
+
+
+router.post('/disableStoredPaymentMethod', (req, res) => {
+  var data = {
+    // "blockedPaymentMethods": ['scheme', 'alipay'],
+    "merchantAccount": "AdyenTechSupport_VictorTang_TEST",
+    "shopperReference": "victortangPostmanUser",
+    "recurringDetailReference": req.body.storedPaymentMethodId,
+    "channel": "Web"
+  }
+
+  console.log(data)
+
+  var config = {
+    method: 'post',
+    url: palUrlEndpoint + 'Recurring/v68/disable',
+    headers: {
+      'x-api-key': myXAPIKey,
+      'Content-Type': 'application/json'
+    },
+    data: data
+  };
+
+  axios(config)
+    .then(function (response) {
+      res.status(200).json({
+        'success': true,
+        'apiRequest': data,
+        'apiResponse': response.data
+      });
+    })
+    .catch(function (error) {
+      console.log(error);
+      // console.log('return')
+      res.status(404).json({ 'success': false })
+    });
+});
+
 
 module.exports = router;

@@ -15,6 +15,7 @@ const redirectResult = urlParams.get('redirectResult');
 var promotionTextElement = document.getElementById("promotionText");
 var paymentAmountElement = document.getElementById("paymentAmount");
 var shoppingCartAmountElement = document.getElementById("shoppingCartAmount");
+var dropinComponent;
 
 
 // Detected Card information
@@ -80,63 +81,156 @@ const applePayConfiguration = {
     countryCode: "HK"
 };
 
+
+const cardConfiguration = {
+  brandsConfiguration: {
+    // visa: {
+    //   icon: ''
+    // }
+  },
+  configuration: {
+    socialSecurityNumberMode: 'auto'
+  },
+  billingAddressRequired: true,
+  billingAddressMode: 'partial',
+  showBrandIcon: true,
+  showBrandsUnderCardNumber: false,
+  amount: null,
+  enableStoreDetails: true,
+  hasHolderName: true,
+  holderNameRequired: true,
+  data: {
+      holderName: "Chan Tai Man",
+      billingAddress: {
+        postalCode: 98123
+      }
+  },
+  // installmentOptions: { "card": { "values": [2, 3, 4] }},
+  // billingAddressRequired: true,
+  name: "信用咖",
+  styles: styleObject,
+  onBrand: function(brand){
+    console.log(brand)
+  },
+  onBrand: function(brand){
+    console.log('Brand information')
+    console.log(brand)
+    detectedCard['brand'] = brand['brand']
+    var promotionDetails = applyCardDiscount(detectedCard)
+    updatePromotionText(
+      promotionDetails['appliedDiscount'], promotionDetails['promotionText']
+    )
+  },
+  onBinValue: function(bin){
+    console.log(bin)
+    detectedCard['bin'] = bin['binValue']
+    var promotionDetails = applyCardDiscount(detectedCard)
+    updatePromotionText(
+      promotionDetails['appliedDiscount'], promotionDetails['promotionText']
+    )
+  },
+}
+
+const dropinConfiguration = {
+  openFirstPaymentMethod: false,
+  openFirstStoredPaymentMethod: false,
+  showRemovePaymentMethodButton: true,
+  showPaymentMethods: true,
+  showStoredPaymentMethods: true,
+  onDisableStoredPaymentMethod: (storedPaymentMethodId, resolve, reject) => {
+    console.log(storedPaymentMethodId)
+
+    var payload = {
+      'storedPaymentMethodId': storedPaymentMethodId
+    }
+
+    fetch(url_domain + "/api/checkout/disableStoredPaymentMethod",
+      {
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      })
+      .then(response => response.json())
+      .then(function (data) {
+        console.log(data)
+        if (data['success'] === true) {
+          // Deal with payment result here
+          resolve()
+        } else {
+          reject()
+          console.log("Failed to disable a token")
+        }
+      })
+  },
+  onSelect: (component) => {
+    console.log(component.props)
+
+    // Detected opened payment method
+    var paymentMethod = component.props.type
+    var storedPaymentMethodId = component.props.storedPaymentMethodId
+
+    if (paymentMethod == 'card' && storedPaymentMethodId) {
+      detectedCard['brand'] = component.props.brand
+      var promotionDetails = applyCardDiscount(detectedCard)
+      updatePromotionText(
+        promotionDetails['appliedDiscount'], promotionDetails['promotionText']
+      )
+    } else if (paymentMethod == 'paypal') {
+      updatePromotionText(
+        10, 'Paypal detected: 10% OFF discount applied'
+      )
+
+    } else {
+      updatePromotionText(0, 'No promotion')
+    }
+  },
+}
+
+
 const configuration = {
   environment: 'test', // Change to 'live' for the live environment.
+  locale: "zh_HK",
+  amount: null,
   clientKey: clientKey, // Public key used for client-side authentication: https://docs.adyen.com/development-resources/client-side-authentication
   analytics: {
     enabled: true // Set to false to not send analytics data to Adyen.
   },
-  // session: {
-  //   id: '', // Unique identifier for the payment session.
-  //   sessionData: '' // The payment session data.
-  // },
-  // styles: {
-  //   base: {
-  //     // "creditCard.holderName": "Name on card",
-  //     // "creditCard.holderName.placeholder": "J. Smith",
-  //     // "creditCard.holderName.invalid": "Invalid cardholder name",
-  //     "creditCard.numberField.title": "信用咖號碼",
-  //     // "creditCard.numberField.invalid": "Invalid card number",
-  //     // "creditCard.expiryDateField.title": "Expiry date",
-  //     // "creditCard.expiryDateField.placeholder": "MM/YY",
-  //     // "creditCard.expiryDateField.invalid": "Invalid expiry date",
-  //     // "creditCard.expiryDateField.month": "Month",
-  //     // "creditCard.expiryDateField.month.placeholder": "MM",
-  //     // "creditCard.expiryDateField.year.placeholder": "YY",
-  //     // "creditCard.expiryDateField.year": "Year",
-  //     // "creditCard.cvcField.title": "CVC / CVV",
-  //     "creditCard.cvcField.placeholder": "999",
-  //     // "creditCard.storeDetailsButton": "Remember for next time",
-  //     // "creditCard.oneClickVerification.invalidInput.title": "Invalid CVC / CVV format",
-  //     // "creditCard.cvcField.placeholder.4digits": "4 digits",
-  //     // "creditCard.cvcField.placeholder.3digits": "3 digits",
-  //   }
-  // },
+
   onPaymentCompleted: (result, component) => {
       console.info(result, component);
       console.log('onPaymentCompleted')
-      wait(2000)
+      // wait(2000)
       handleServerResponse(result, component);
 
   },
   onError: (error, component) => {
       console.error(error.name, error.message, error.stack, component);
   },
-  openFirstPaymentMethod: false,
 
   // can be hidden
   showPayButton: true,
-  openFirstStoredPaymentMethod: false,
-  showStoredPaymentMethods: true,
   // Any payment method specific configuration. Find the configuration specific to each payment method:  https://docs.adyen.com/payment-methods
   // For example, this is 3D Secure configuration for cards:
   onSubmit: (state, component) => {
     console.log(state)
+    console.log(state.data)
+    console.log(state.data.storePaymentMethod)
+    wait(3000)
 
+    // Must pass in the whole data subject instead of just payment method!!!!
+    // Data also include information such as billing Address
     var payload = {}
+    payload['data'] = state.data
+
+
+
     payload['paymentMethod'] = state['data']['paymentMethod']
     payload['amount'] = paymentAmountElement.innerHTML + '0'
+    payload['shopperReference'] = 'victortangPostmanUser'
     // payload['returnUrl'] = url_domain + '/component'
+    // wait(5000)
     payload['returnUrl'] = url_domain + '/?type=dropin'
 
     console.log(payload)
@@ -163,49 +257,20 @@ const configuration = {
      //  Your function calling your server to make a `/payments` request
   },
   onAdditionalDetails: (state, component) => {
-    console.log(state)
     console.log("on Additional Details triggered")
-    submitPaymentDetails(state.details)
+    console.log(state)
+    submitPaymentDetails(state.data)
      //  Your function calling your server to make a `/payments/details` request
   },
-  showRemovePaymentMethodButton: true,
-  onDisableStoredPaymentMethod: (storedPaymentMethodId, resolve, reject) => {
-    console.log(storedPaymentMethodId)
-    dropinComponent.resolve()
-  },
   paymentMethodsConfiguration: {
+    paypal: {
+      "amount": {
+        "currency": "HKD"
+      }
+    },
     applepay: applePayConfiguration,
-    card: {
-      amount: null,
-      enableStoreDetails: true,
-      hasHolderName: true,
-      holderNameRequired: true,
-      billingAddressRequired: false,
-      name: "信用咖",
-      styles: styleObject,
-      onBrand: function(brand){
-        console.log(brand)
-      },
-      onBrand: function(brand){
-        console.log('Brand information')
-        console.log(brand)
-        detectedCard['brand'] = brand['brand']
-        var promotionDetails = applyCardDiscount(detectedCard)
-        updatePromotionText(
-          promotionDetails['appliedDiscount'], promotionDetails['promotionText']
-        )
-      },
-      onBinValue: function(bin){
-        console.log(bin)
-        detectedCard['bin'] = bin['binValue']
-        var promotionDetails = applyCardDiscount(detectedCard)
-        updatePromotionText(
-          promotionDetails['appliedDiscount'], promotionDetails['promotionText']
-        )
-      },
-    }
+    card: cardConfiguration
   },
-  locale: "zh_HK",
   translations: {
     "zh_HK": {
       "creditCard.numberField.title": "尊貴客人的卡號",
@@ -219,6 +284,28 @@ const configuration = {
       "creditCard.holderName": "尊貴客人的名字"
     }
   }
+  // styles: {
+  //   base: {
+  //     // "creditCard.holderName": "Name on card",
+  //     // "creditCard.holderName.placeholder": "J. Smith",
+  //     // "creditCard.holderName.invalid": "Invalid cardholder name",
+  //     "creditCard.numberField.title": "信用咖號碼",
+  //     // "creditCard.numberField.invalid": "Invalid card number",
+  //     // "creditCard.expiryDateField.title": "Expiry date",
+  //     // "creditCard.expiryDateField.placeholder": "MM/YY",
+  //     // "creditCard.expiryDateField.invalid": "Invalid expiry date",
+  //     // "creditCard.expiryDateField.month": "Month",
+  //     // "creditCard.expiryDateField.month.placeholder": "MM",
+  //     // "creditCard.expiryDateField.year.placeholder": "YY",
+  //     // "creditCard.expiryDateField.year": "Year",
+  //     // "creditCard.cvcField.title": "CVC / CVV",
+  //     "creditCard.cvcField.placeholder": "999",
+  //     // "creditCard.storeDetailsButton": "Remember for next time",
+  //     // "creditCard.oneClickVerification.invalidInput.title": "Invalid CVC / CVV format",
+  //     // "creditCard.cvcField.placeholder.4digits": "4 digits",
+  //     // "creditCard.cvcField.placeholder.3digits": "3 digits",
+  //   }
+  // },
 };
 
 
@@ -242,6 +329,7 @@ async function startCheckoutByPaymentMethods() {
   // Create a drop-in session
   var payload = {}
 
+  console.log(url_domain + "/api/checkout/paymentMethods")
   fetch(url_domain + "/api/checkout/paymentMethods",
     {
       method: "POST",
@@ -259,10 +347,10 @@ async function startCheckoutByPaymentMethods() {
 
         AdyenCheckout(configuration)
           .then((checkout) => {
-            const dropinComponent = checkout.create(integrationType, {
-                //... other optional configuration
-                instantPaymentTypes: ['applepay']
-            }).mount('#dropin-container');
+            dropinComponent = checkout.create(
+              integrationType,
+              dropinConfiguration
+            ).mount('#dropin-container');
           });
       } else {
         console.log("Failed to create a drop-in session")
@@ -280,9 +368,9 @@ async function createAdyenCheckout(session) {
 }
 
 
-async function submitPaymentDetails(details) {
+async function submitPaymentDetails(data) {
   var payload = {}
-  payload['details'] = details
+  payload['data'] = data
 
   console.log(payload)
 
@@ -317,7 +405,9 @@ async function finalizeCheckout() {
     console.log('Redirect result with NO session ID, call payments details API')
 
     submitPaymentDetails({
-      'redirectResult': redirectResult
+      "details": {
+        'redirectResult': redirectResult
+      }
     })
     // The purpose to submit payment details after redirect is to get the resultCode
   } catch (error) {
@@ -360,7 +450,7 @@ async function startCheckoutBySession() {
         configuration['session']['sessionData'] = data['apiResponse']['sessionData']
         AdyenCheckout(configuration)
           .then((checkout) => {
-            const dropinComponent = checkout.create(integrationType).mount('#dropin-container');
+            dropinComponent = checkout.create(integrationType).mount('#dropin-container');
           });
       } else {
         console.log("Failed to create a drop-in session")
@@ -375,7 +465,7 @@ if (!redirectResult) {
   startCheckoutByPaymentMethods();
 }
 else {
-  wait(2000)
+  // wait(2000)
   console.log('From redirect')
   // existing session: complete Checkout
   finalizeCheckout();

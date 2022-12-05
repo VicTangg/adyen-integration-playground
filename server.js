@@ -12,6 +12,12 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
+
+app.use(cors({ origin: [
+    'http://localhost:5000', 'https://adyen-integration-playground.onrender.com/'
+  ], credentials: true
+}))
+
 // app.use('/images', express.static(__dirname + '/images'));
 // app.use(express.static(__dirname + '/public'));
 app.use('/', express.static(__dirname + '/public/drop-in-session'));
