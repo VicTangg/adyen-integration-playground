@@ -73,6 +73,32 @@ function handleServerResponse(res, component) {
   }
 }
 
+
+const googlePayConfiguration = {
+  amount: {
+      value: 1000,
+      currency: "EUR"
+  },
+  countryCode: "NL",
+  //Set this to PRODUCTION when you're ready to accept live payments
+  environment: "TEST",
+
+  // Button configurations
+  buttonType: "book",
+  buttonColor: "black",
+  buttonLocale: "en",
+
+  emailRequired: true,
+  shippingAddressRequired: true,
+  billingAddressRequired: true,
+
+  configuration: {
+    merchantName: "My Coffee Delivery",
+    gatewayMerchantId: "AdyenTechSupport_VictorTang_TEST"
+  }
+};
+
+
 const applePayConfiguration = {
     amount: {
         value: 1000,
@@ -132,7 +158,7 @@ const cardConfiguration = {
 }
 
 const dropinConfiguration = {
-  instantPaymentTypes: ['applepay'],
+  instantPaymentTypes: ['paywithgoogle'],
   openFirstPaymentMethod: false,
   openFirstStoredPaymentMethod: false,
   showRemovePaymentMethodButton: true,
@@ -270,6 +296,7 @@ const configuration = {
       }
     },
     applepay: applePayConfiguration,
+    googlepay: googlePayConfiguration,
     card: cardConfiguration
   },
   translations: {
@@ -350,7 +377,7 @@ async function startCheckoutByPaymentMethods() {
           .then((checkout) => {
             dropinComponent = checkout.create(
               integrationType,
-              dropinConfiguration
+              // dropinConfiguration
             ).mount('#dropin-container');
           });
       } else {
