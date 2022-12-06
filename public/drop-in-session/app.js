@@ -377,7 +377,8 @@ async function startCheckoutByPaymentMethods() {
           .then((checkout) => {
             dropinComponent = checkout.create(
               integrationType,
-              // dropinConfiguration
+              dropinConfiguration
+              // {instantPaymentTypes:["applepay","paywithgoogle"]}
             ).mount('#dropin-container');
           });
       } else {
