@@ -79,8 +79,10 @@ const applePayConfiguration = {
         currency: "HKD"
     },
     countryCode: "HK",
-    buttonType: "buy",
-    buttonColor: "black"
+    configuration: {
+      buttonType: "buy",
+      buttonColor: "black"
+    }
 };
 
 
