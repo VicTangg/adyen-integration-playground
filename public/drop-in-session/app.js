@@ -78,11 +78,7 @@ const applePayConfiguration = {
         value: 1000,
         currency: "HKD"
     },
-    countryCode: "HK",
-    configuration: {
-      buttonType: "buy",
-      buttonColor: "black"
-    }
+    countryCode: "HK"
 };
 
 
@@ -136,6 +132,7 @@ const cardConfiguration = {
 }
 
 const dropinConfiguration = {
+  instantPaymentTypes: ['applepay'],
   openFirstPaymentMethod: false,
   openFirstStoredPaymentMethod: false,
   showRemovePaymentMethodButton: true,
