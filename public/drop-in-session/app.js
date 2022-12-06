@@ -104,7 +104,9 @@ const applePayConfiguration = {
         value: 1000,
         currency: "HKD"
     },
-    countryCode: "HK"
+    countryCode: "HK",
+    buttonType: "donate",
+    buttColor: "black"
 };
 
 
