@@ -160,7 +160,7 @@ const cardConfiguration = {
 }
 
 const dropinConfiguration = {
-  instantPaymentTypes: ['paywithgoogle'],
+  instantPaymentTypes: ['googlepay'],
   openFirstPaymentMethod: false,
   openFirstStoredPaymentMethod: false,
   showRemovePaymentMethodButton: true,

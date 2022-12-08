@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 
 const checkout = require('./routes/api/checkout');
+const notifications = require('./routes/api/notifications');
 // const webhooks = require('./routes/api/webhooks');
 // const disputes = require('./routes/api/disputes');
 // const testing = require('./routes/api/testing');
@@ -23,6 +24,7 @@ app.use('/result/failure', express.static(__dirname + '/public/result/failure'))
 
 // app.use('/', frontEnd);
 app.use('/api/checkout', checkout);
+app.use('/api/notifications', notifications);
 // app.use('/api/webhooks', webhooks);
 const port = process.env.PORT || 5000;
 
