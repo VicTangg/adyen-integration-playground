@@ -21,7 +21,7 @@ router.post('/sessions', (req, res) => {
 
   var data = {
     "merchantAccount": "AdyenTechSupport_VictorTang_TEST",
-    "countryCode": "HK",
+    "countryCode": "US",
     "shopperLocale": "en_US",
     "amount": {
         "currency": "CNY",
@@ -124,8 +124,8 @@ router.post('/paymentMethods', (req, res) => {
     // "blockedPaymentMethods": ['scheme', 'alipay'],
     // "splitCardFundingSources": true,
     "merchantAccount": "AdyenTechSupport_VictorTang_TEST",
-    "countryCode": "HK",
-    "shopperLocale": "zh_HK",
+    "countryCode": "US",
+    "shopperLocale": "en_US",
     "amount": {
         "currency": "HKD",
         "value": 1800
