@@ -87,5 +87,5 @@
 }
 
 button[aria-label="Pay"] {
-  -webkit-appearance: unset
+  -webkit-appearance: -apple-pay-button
 }
