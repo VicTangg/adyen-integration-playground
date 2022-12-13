@@ -89,3 +89,7 @@
 button[aria-label="Pay"] {
   -webkit-appearance: -apple-pay-button
 }
+
+button[aria-label="支付"] {
+  -webkit-appearance: -apple-pay-button
+}
