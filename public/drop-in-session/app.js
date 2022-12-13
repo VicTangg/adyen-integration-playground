@@ -220,7 +220,7 @@ const dropinConfiguration = {
 
 const configuration = {
   environment: 'test', // Change to 'live' for the live environment.
-  locale: "en_US",
+  locale: "zh-TW",
   amount: null,
   clientKey: clientKey, // Public key used for client-side authentication: https://docs.adyen.com/development-resources/client-side-authentication
   analytics: {

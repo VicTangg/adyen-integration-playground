@@ -22,7 +22,7 @@ router.post('/sessions', (req, res) => {
   var data = {
     "merchantAccount": "AdyenTechSupport_VictorTang_TEST",
     "countryCode": "US",
-    "shopperLocale": "en_US",
+    "shopperLocale": "zh-TW",
     "amount": {
         "currency": "CNY",
         "value": 1800
