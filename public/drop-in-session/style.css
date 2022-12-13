@@ -85,3 +85,7 @@
 .adyen-checkout__link {
     /* Links */
 }
+
+button[aria-label="Pay"] {
+  -webkit-appearance: unset
+}
