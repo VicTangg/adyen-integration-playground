@@ -84,6 +84,7 @@ router.post('/payments', (req, res) => {
   }
   data['reference'] = "asddadsa"
   data["returnUrl"] = req.body.returnUrl
+  data["captureDelayHours"] = 0
   // data["storePaymentMethod"] = true
   data["amount"] = {
       "currency": "HKD",
