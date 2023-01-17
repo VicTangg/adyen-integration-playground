@@ -1,3 +1,4 @@
+// var clientKey = 'test_TNNSZ6AC2FHXBLVMYUZ3K4KPPQURD4ZG'
 var clientKey = 'test_TNNSZ6AC2FHXBLVMYUZ3K4KPPQURD4ZG'
 var myIPDataKey = "263994c8926a8cfd56041c3ab982cbe2a3461d95ee5bb1791801bbc2"
 var ipAddressField = document.getElementById("ipAddress");
@@ -16,25 +17,50 @@ function handleServerResponse(res, component) {
   console.log(res)
 
 
-  if (res.action) {
-    component.handleAction(res.action);
-  } else {
-    switch (res.resultCode) {
-      case "Authorised":
-        window.location.href = "/result/success";
-        break;
-      case "Pending":
-      case "Received":
-        window.location.href = "/result/pending";
-        break;
-      case "Refused":
-        window.location.href = "/result/failed";
-        break;
-      default:
-        window.location.href = "/result/error";
-        break;
-    }
+  function handleOnAdditionalDetails(state, component) {
+    console.log('I am here after 3ds 2 challenge component')
+    state.data // Provides the data that you must pass in the `/payments/details` call.
+    component // Provides the active component instance that called this event.
   }
+
+  const configuration = {
+    locale: "en_US",
+    environment: "test", // For live payments, change this to a live environment.
+    clientKey: clientKey,
+    onAdditionalDetails: handleOnAdditionalDetails
+  };
+
+
+  AdyenCheckout(configuration)
+    .then((checkout) => {
+      console.log('before 3ds container mount')
+      console.log(res.action)
+      checkout.createFromAction(res.action).mount('#threedscontainer');
+      console.log('after 3ds container mount')
+    });
+
+
+
+
+  // if (res.action) {
+  //   component.handleAction(res.action);
+  // } else {
+  //   switch (res.resultCode) {
+  //     case "Authorised":
+  //       window.location.href = "/result/success";
+  //       break;
+  //     case "Pending":
+  //     case "Received":
+  //       window.location.href = "/result/pending";
+  //       break;
+  //     case "Refused":
+  //       window.location.href = "/result/failed";
+  //       break;
+  //     default:
+  //       window.location.href = "/result/error";
+  //       break;
+  //   }
+  // }
 }
 
 
@@ -110,25 +136,28 @@ const configuration = {
     console.log(state)
     console.log("on Additional Details triggered")
     submitPaymentDetails(state.details)
-     //  Your function calling your server to make a `/payments/details` request
+    //  Your function calling your server to make a `/payments/details` request
   },
   onSubmit: (state, component) => {
     console.log(state)
 
     var payload = {}
-    payload['paymentMethod'] = state['data']['paymentMethod']
-    payload['amount'] = paymentAmountElement.innerHTML + '0'
-    // payload['returnUrl'] = url_domain + '/component'
-    payload['returnUrl'] = url_domain + '/component?sessionId=' + sessionId
+    payload['data'] = state.data
 
-    console.log(payload)
+    payload['paymentMethod'] = state['data']['paymentMethod']
+    payload['amount'] = paymentAmountElement.innerHTML
+    payload['currency'] = 'HKD'
+    payload['shopperReference'] = 'victortangPostmanUser'
+    payload['returnUrl'] = url_domain + '/component'
+
+    console.log(JSON.stringify(payload))
 
 
     fetch(url_domain + "/api/checkout/payments",
       {
         method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(payload)
       })
@@ -144,15 +173,15 @@ const configuration = {
       })
 
 
-     //  Your function calling your server to make a `/payments` request
+    //  Your function calling your server to make a `/payments` request
   },
   onPaymentCompleted: (result, component) => {
-      console.info(result, component);
-      handleServerResponse(result, component);
+    console.info(result, component);
+    handleServerResponse(result, component);
 
   },
   onError: (error, component) => {
-      console.error(error.name, error.message, error.stack, component);
+    console.error(error.name, error.message, error.stack, component);
   },
   showStoredPaymentMethods: true,
   paymentMethodsConfiguration: {
@@ -163,13 +192,13 @@ const configuration = {
       holderNameRequired: true,
       billingAddressRequired: false,
       amount: null,
-      onBrand: function(brand){
+      onBrand: function (brand) {
         console.log('Brand information')
         console.log(brand)
         detectedCard['brand'] = brand['brand']
         applyCardDiscount(detectedCard)
       },
-      onBinValue: function(bin){
+      onBinValue: function (bin) {
         console.log(bin)
         detectedCard['bin'] = bin['binValue']
         applyCardDiscount(detectedCard)
@@ -228,7 +257,7 @@ async function startCheckout() {
         configuration['session']['sessionData'] = data['apiResponse']['sessionData']
         AdyenCheckout(configuration)
           .then((checkout) => {
-            console.log(checkout.paymentMethodsResponse)
+            console.log('Before card container mount')
             dropinComponent = checkout.create('scheme').mount('#card-container');
           });
 
@@ -312,18 +341,18 @@ async function fianlizeCheckoutWithoutSessionId() {
 
 
 
-function wait(ms){
-   var start = new Date().getTime();
-   var end = start;
-   while(end < start + ms) {
-     end = new Date().getTime();
+function wait(ms) {
+  var start = new Date().getTime();
+  var end = start;
+  while (end < start + ms) {
+    end = new Date().getTime();
   }
 }
 
 
-if (!sessionId && redirectResult){
+if (!sessionId && redirectResult) {
   fianlizeCheckoutWithoutSessionId();
-} else if (sessionId && redirectResult){
+} else if (sessionId && redirectResult) {
   wait(2000)
   // existing session: complete Checkout
   finalizeCheckout();

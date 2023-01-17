@@ -1,3 +1,4 @@
+// var clientKey = 'test_TNNSZ6AC2FHXBLVMYUZ3K4KPPQURD4ZG'
 var clientKey = 'test_TNNSZ6AC2FHXBLVMYUZ3K4KPPQURD4ZG'
 var myIPDataKey = "263994c8926a8cfd56041c3ab982cbe2a3461d95ee5bb1791801bbc2"
 var ipAddressField = document.getElementById("ipAddress");
@@ -219,9 +220,9 @@ const dropinConfiguration = {
 
 
 const configuration = {
+  amount: null,
   environment: 'test', // Change to 'live' for the live environment.
   locale: "zh-TW",
-  amount: null,
   clientKey: clientKey, // Public key used for client-side authentication: https://docs.adyen.com/development-resources/client-side-authentication
   analytics: {
     enabled: true // Set to false to not send analytics data to Adyen.
@@ -246,7 +247,7 @@ const configuration = {
     console.log(state)
     console.log(state.data)
     console.log(state.data.storePaymentMethod)
-    wait(3000)
+    wait(2000)
 
     // Must pass in the whole data subject instead of just payment method!!!!
     // Data also include information such as billing Address
@@ -256,7 +257,8 @@ const configuration = {
 
 
     payload['paymentMethod'] = state['data']['paymentMethod']
-    payload['amount'] = paymentAmountElement.innerHTML + '0'
+    payload['amount'] = paymentAmountElement.innerHTML
+    payload['currency'] = 'HKD'
     payload['shopperReference'] = 'victortangPostmanUser'
     // payload['returnUrl'] = url_domain + '/component'
     // wait(5000)

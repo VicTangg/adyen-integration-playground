@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path')
 const https = require('https');
 const { Console } = require('console');
+const base64Url = require('base64url')
 
 var myXAPIKey = process.env.XAPIKEY;
 
@@ -24,8 +25,8 @@ router.post('/sessions', (req, res) => {
     "countryCode": "US",
     "shopperLocale": "zh-TW",
     "amount": {
-        "currency": "CNY",
-        "value": 1800
+      "currency": "CNY",
+      "value": 1800
     },
     "reference": "abc",
     "returnUrl": "http://localhost:5000/",
@@ -61,6 +62,7 @@ router.post('/sessions', (req, res) => {
 
 router.post('/payments', (req, res) => {
   console.log(Object.keys(req.body.data))
+  // console.log(req.body.data)
 
   // Drop in pass in these values
   // 'riskData',
@@ -77,19 +79,18 @@ router.post('/payments', (req, res) => {
   data["merchantAccount"] = "AdyenTechSupport_VictorTang_TEST"
   data["shopperReference"] = req.body.shopperReference
   data["authenticationData"] = {
-      "attemptAuthentication": "always",
-      "threeDSRequestData": {
-          "nativeThreeDS": "preferred"
-      }
+    "attemptAuthentication": "always",
+    "threeDSRequestData": {
+      "nativeThreeDS": "preferred"
+    }
   }
   data['reference'] = "asddadsa"
   data["returnUrl"] = req.body.returnUrl
   data["captureDelayHours"] = 0
   // data["storePaymentMethod"] = true
   data["amount"] = {
-      "currency": "HKD",
-      "value": 100000
-      // "value": req.body.amount
+    "currency": req.body.currency,
+    "value": req.body.amount + '00'
   }
   data["channel"] = "Web"
 
@@ -121,15 +122,17 @@ router.post('/payments', (req, res) => {
 
 
 router.post('/paymentMethods', (req, res) => {
+  console.log(req.body.data)
+
   var data = {
     // "blockedPaymentMethods": ['scheme', 'alipay'],
     // "splitCardFundingSources": true,
     "merchantAccount": "AdyenTechSupport_VictorTang_TEST",
-    "countryCode": "US",
+    "countryCode": "HK",
     "shopperLocale": "en_US",
     "amount": {
-        "currency": "HKD",
-        "value": 1800
+      "currency": "HKD",
+      "value": 1800
     },
     "reference": "abc",
     "shopperReference": "victortangPostmanUser",
@@ -231,6 +234,32 @@ router.post('/disableStoredPaymentMethod', (req, res) => {
       // console.log('return')
       res.status(404).json({ 'success': false })
     });
+});
+
+
+router.post('/identifyShopperFingerprinting', (req, res) => {
+  var threeDSServerTransID = req.body.threeDSServerTransID
+  var fingerprintToken = req.body.fingerprintToken
+
+  var decodedFingerprintToken = JSON.parse(base64Url.decode(fingerprintToken))
+
+  console.log(decodedFingerprintToken)
+  const dataObj =
+    { threeDSServerTransID: threeDSServerTransID, 
+      threeDSMethodNotificationURL: req.body.YOUR_3DS_METHOD_NOTIFICATION_URL
+  };
+
+  console.log(dataObj)
+
+  const stringifiedDataObject = JSON.stringify(dataObj);
+  const encodedJSON = base64Url.encode(stringifiedDataObject);
+
+  res.status(200).json({
+    'success': true,
+    'encodedJSONforIframe': encodedJSON,
+    'threeDSMethodUrl': decodedFingerprintToken.threeDSMethodUrl
+  });
+
 });
 
 

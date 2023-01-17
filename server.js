@@ -4,6 +4,7 @@ const cors = require('cors');
 
 const checkout = require('./routes/api/checkout');
 const notifications = require('./routes/api/notifications');
+const pos = require('./routes/api/pos');
 // const webhooks = require('./routes/api/webhooks');
 // const disputes = require('./routes/api/disputes');
 // const testing = require('./routes/api/testing');
@@ -17,6 +18,7 @@ app.use(bodyParser.json());
 // app.use(express.static(__dirname + '/public'));
 app.use('/', express.static(__dirname + '/public/drop-in-session'));
 app.use('/component', express.static(__dirname + '/public/component-session'));
+app.use('/custom-card', express.static(__dirname + '/public/custom-card'));
 app.use('/result/success', express.static(__dirname + '/public/result/success'));
 app.use('/result/failure', express.static(__dirname + '/public/result/failure'));
 
@@ -25,6 +27,7 @@ app.use('/result/failure', express.static(__dirname + '/public/result/failure'))
 // app.use('/', frontEnd);
 app.use('/api/checkout', checkout);
 app.use('/api/notifications', notifications);
+app.use('/api/pos', pos);
 // app.use('/api/webhooks', webhooks);
 const port = process.env.PORT || 5000;
 
