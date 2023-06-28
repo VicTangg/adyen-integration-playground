@@ -16,7 +16,7 @@ app.use(bodyParser.json());
 
 // app.use('/images', express.static(__dirname + '/images'));
 // app.use(express.static(__dirname + '/public'));
-app.use('/', express.static(__dirname + '/public/drop-in-session'));
+app.use('/dropin', express.static(__dirname + '/public/drop-in-session'));
 app.use('/component', express.static(__dirname + '/public/component-session'));
 app.use('/custom-card', express.static(__dirname + '/public/custom-card'));
 app.use('/result/success', express.static(__dirname + '/public/result/success'));

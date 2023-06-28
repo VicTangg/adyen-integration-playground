@@ -54,7 +54,10 @@
 
               <div style="background: #f9fafa;">
                 <div><b>Shopping Cart Amount: (HKD) </b><p id="shoppingCartAmount">500</p></div>
-                <b>Payment Amount: (HKD) </b><p id="paymentAmount">500</p>
+                <div><b>Point Dollar: (HKD) </b><input type="range" min="0" max="100" value="0" class="slider-color" id="myRange"><p>Value: <span id="demo"></span></p></div>
+                <div><button type="button" class="btn btn-dark" onclick=confirmPointsToUse()>Confirm</button></div>
+                <div><b>Payment Amount: (HKD) </b><p id="shoppingCartAmountAfterPoints">500</p></div>
+                <b>Payment Amount after scheme/bin discount: (HKD) </b><p id="paymentAmount">500</p>
                 <p id="promotionText">No promotion</p>
                 <br/>
                 <br/>

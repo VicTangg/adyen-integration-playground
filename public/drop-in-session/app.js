@@ -7,7 +7,7 @@ const url_domain = location.protocol + '//' + location.host;
 
 // Used to finalize a checkout call in case of redirect
 const urlParams = new URLSearchParams(window.location.search);
-const integrationType = urlParams.get('type')
+// const integrationType = urlParams.get('type')
 const sessionId = urlParams.get('sessionId'); // Unique identifier for the payment session
 const redirectResult = urlParams.get('redirectResult');
 
@@ -16,8 +16,47 @@ const redirectResult = urlParams.get('redirectResult');
 var promotionTextElement = document.getElementById("promotionText");
 var paymentAmountElement = document.getElementById("paymentAmount");
 var shoppingCartAmountElement = document.getElementById("shoppingCartAmount");
+var shoppingCartAmountAfterDiscountElement = document.getElementById("shoppingCartAmountAfterPoints");
 var dropinComponent;
 
+
+var slider = document.getElementById("myRange");
+var output = document.getElementById("demo");
+output.innerHTML = slider.value;
+
+slider.oninput = function() {
+  output.innerHTML = this.value;
+
+  var newAmount = parseInt(shoppingCartAmountElement.innerHTML) - output.innerHTML
+  shoppingCartAmountAfterDiscountElement.innerHTML = newAmount
+  paymentAmountElement.innerHTML = newAmount
+  confirmPointsToUse()
+}
+
+
+function confirmPointsToUse() {
+  var newAmount = parseInt(shoppingCartAmountElement.innerHTML) - output.innerHTML
+  shoppingCartAmountAfterDiscountElement.innerHTML = newAmount
+
+  // Load drop in with updated amount
+  configuration['amount'] = {
+      value: newAmount * 100,
+      currency: "HKD"
+  }
+
+  dropinComponent.unmount()
+
+  AdyenCheckout(configuration)
+  .then((checkout) => {
+    dropinComponent = checkout.create(
+      "dropin",
+      dropinConfiguration,
+      // {instantPaymentTypes:["applepay","paywithgoogle"]}
+    ).mount('#dropin-container');
+  });
+
+
+}
 
 // Detected Card information
 var detectedCard = {
@@ -27,7 +66,7 @@ var detectedCard = {
 
 
 async function updatePromotionText(appliedDiscount, promotionText) {
-  var discountedAmount = parseInt(shoppingCartAmountElement.innerHTML) * (100 - appliedDiscount) / 100
+  var discountedAmount = parseInt(shoppingCartAmountAfterDiscountElement.innerHTML) * (100 - appliedDiscount) / 100
   paymentAmountElement.innerHTML = discountedAmount
   promotionTextElement.innerHTML = promotionText
 }
@@ -76,10 +115,10 @@ function handleServerResponse(res, component) {
 
 
 const googlePayConfiguration = {
-  amount: {
-      value: 1000,
-      currency: "EUR"
-  },
+  // amount: {
+  //     value: 50000,
+  //     currency: "HKD"
+  // },
   countryCode: "NL",
   //Set this to PRODUCTION when you're ready to accept live payments
   environment: "TEST",
@@ -92,7 +131,13 @@ const googlePayConfiguration = {
   emailRequired: true,
   shippingAddressRequired: true,
   billingAddressRequired: true,
-
+  onClick: (resolve, reject) => {
+    if (confirm("Do a 2FA here") === true) {
+      resolve()
+    } else {
+      reject()
+    }
+  },
   configuration: {
     merchantName: "My Coffee Delivery",
     gatewayMerchantId: "AdyenTechSupport_VictorTang_TEST"
@@ -101,10 +146,10 @@ const googlePayConfiguration = {
 
 
 const applePayConfiguration = {
-    amount: {
-        value: 1000,
-        currency: "HKD"
-    },
+    // amount: {
+    //     value: 50000,
+    //     currency: "HKD"
+    // },
     countryCode: "HK",
     buttonType: "donate",
     buttColor: "black"
@@ -124,7 +169,10 @@ const cardConfiguration = {
   billingAddressMode: 'partial',
   showBrandIcon: true,
   showBrandsUnderCardNumber: false,
-  amount: null,
+  // amount: {
+  //   value: 50000,
+  //   currency: "HKD"
+  // },
   enableStoreDetails: true,
   hasHolderName: true,
   holderNameRequired: true,
@@ -212,6 +260,16 @@ const dropinConfiguration = {
         10, 'Paypal detected: 10% OFF discount applied'
       )
 
+    } else if (paymentMethod == 'alipay_hk') {
+      updatePromotionText(
+        10, 'Alipay HK detected: 10% OFF discount applied'
+      )
+
+    } else if (paymentMethod == 'alipay') {
+      updatePromotionText(
+        10, 'Alipay detected: 10% OFF discount applied'
+      )
+
     } else {
       updatePromotionText(0, 'No promotion')
     }
@@ -220,8 +278,11 @@ const dropinConfiguration = {
 
 
 const configuration = {
-  amount: null,
-  environment: 'test', // Change to 'live' for the live environment.
+  amount: {
+    value: 50000,
+    currency: "HKD"
+},
+environment: 'test', // Change to 'live' for the live environment.
   locale: "zh-TW",
   clientKey: clientKey, // Public key used for client-side authentication: https://docs.adyen.com/development-resources/client-side-authentication
   analytics: {
@@ -248,6 +309,10 @@ const configuration = {
     console.log(state.data)
     console.log(state.data.storePaymentMethod)
     wait(2000)
+
+    if (confirm("Do a 2FA here") === false) {
+      return
+    }
 
     // Must pass in the whole data subject instead of just payment method!!!!
     // Data also include information such as billing Address
@@ -294,11 +359,11 @@ const configuration = {
      //  Your function calling your server to make a `/payments/details` request
   },
   paymentMethodsConfiguration: {
-    paypal: {
-      "amount": {
-        "currency": "HKD"
-      }
-    },
+    // paypal: {
+    //   "amount": {
+    //     "currency": "HKD"
+    //   }
+    // },
     applepay: applePayConfiguration,
     googlepay: googlePayConfiguration,
     card: cardConfiguration
@@ -380,8 +445,8 @@ async function startCheckoutByPaymentMethods() {
         AdyenCheckout(configuration)
           .then((checkout) => {
             dropinComponent = checkout.create(
-              integrationType,
-              dropinConfiguration
+              "dropin",
+              dropinConfiguration,
               // {instantPaymentTypes:["applepay","paywithgoogle"]}
             ).mount('#dropin-container');
           });

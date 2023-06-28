@@ -90,7 +90,7 @@ router.post('/payments', (req, res) => {
   // data["storePaymentMethod"] = true
   data["amount"] = {
     "currency": req.body.currency,
-    "value": req.body.amount + '00'
+    "value": parseFloat(req.body.amount) * 100
   }
   data["channel"] = "Web"
 
@@ -125,7 +125,7 @@ router.post('/paymentMethods', (req, res) => {
   console.log(req.body.data)
 
   var data = {
-    // "blockedPaymentMethods": ['scheme', 'alipay'],
+    "blockedPaymentMethods": ['applepay'],
     // "splitCardFundingSources": true,
     "merchantAccount": "AdyenTechSupport_VictorTang_TEST",
     "countryCode": "HK",
