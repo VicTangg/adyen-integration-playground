@@ -152,8 +152,15 @@ const applePayConfiguration = {
     // },
     countryCode: "HK",
     buttonType: "donate",
-    buttColor: "black"
-};
+    buttColor: "black",
+    onClick: (resolve, reject) => {
+      if (confirm("Do a 2FA here") === true) {
+        resolve()
+      } else {
+        reject()
+      }
+    },
+  };
 
 
 const cardConfiguration = {
