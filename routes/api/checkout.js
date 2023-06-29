@@ -125,7 +125,7 @@ router.post('/paymentMethods', (req, res) => {
   console.log(req.body.data)
 
   var data = {
-    "blockedPaymentMethods": ['applepay'],
+    // "blockedPaymentMethods": ['applepay'],
     // "splitCardFundingSources": true,
     "merchantAccount": "AdyenTechSupport_VictorTang_TEST",
     "countryCode": "HK",

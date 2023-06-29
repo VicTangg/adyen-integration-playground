@@ -308,10 +308,13 @@ environment: 'test', // Change to 'live' for the live environment.
     console.log(state)
     console.log(state.data)
     console.log(state.data.storePaymentMethod)
+
     wait(2000)
 
-    if (confirm("Do a 2FA here") === false) {
-      return
+    if (state['data']['paymentMethod']['type'] !== 'googlepay') {
+      if (confirm("Do a 2FA here") === false) {
+        return
+      }  
     }
 
     // Must pass in the whole data subject instead of just payment method!!!!
@@ -322,12 +325,13 @@ environment: 'test', // Change to 'live' for the live environment.
 
 
     payload['paymentMethod'] = state['data']['paymentMethod']
+    console.log(state['data']['paymentMethod'])
     payload['amount'] = paymentAmountElement.innerHTML
     payload['currency'] = 'HKD'
     payload['shopperReference'] = 'victortangPostmanUser'
     // payload['returnUrl'] = url_domain + '/component'
     // wait(5000)
-    payload['returnUrl'] = url_domain + '/?type=dropin'
+    payload['returnUrl'] = url_domain + '/dropin'
 
     console.log(payload)
 
