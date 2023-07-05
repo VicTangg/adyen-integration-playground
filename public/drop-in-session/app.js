@@ -172,6 +172,7 @@ const cardConfiguration = {
   configuration: {
     socialSecurityNumberMode: 'auto'
   },
+  hideCVC: true,
   billingAddressRequired: true,
   billingAddressMode: 'partial',
   showBrandIcon: true,
