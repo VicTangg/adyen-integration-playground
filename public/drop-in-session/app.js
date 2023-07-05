@@ -378,7 +378,10 @@ environment: 'test', // Change to 'live' for the live environment.
     // },
     applepay: applePayConfiguration,
     googlepay: googlePayConfiguration,
-    card: cardConfiguration
+    card: cardConfiguration,
+    storedCard: {
+      hideCVC: true
+    }
   },
   translations: {
     "zh_HK": {
