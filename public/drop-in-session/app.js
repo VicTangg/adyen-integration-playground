@@ -34,6 +34,11 @@ slider.oninput = function() {
 }
 
 
+function closeActivePaymentMethod() {
+  dropinComponent.closeActivePaymentMethod()
+}
+
+
 function confirmPointsToUse() {
   var newAmount = parseInt(shoppingCartAmountElement.innerHTML) - output.innerHTML
   shoppingCartAmountAfterDiscountElement.innerHTML = newAmount
@@ -217,7 +222,7 @@ const cardConfiguration = {
 }
 
 const dropinConfiguration = {
-  instantPaymentTypes: ["googlepay", "applepay"],
+  // instantPaymentTypes: ["googlepay", "applepay"],
   openFirstPaymentMethod: false,
   openFirstStoredPaymentMethod: false,
   showRemovePaymentMethodButton: true,
