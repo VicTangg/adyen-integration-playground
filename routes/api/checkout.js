@@ -128,7 +128,7 @@ router.post('/paymentMethods', (req, res) => {
     // "blockedPaymentMethods": ['applepay'],
     // "splitCardFundingSources": true,
     "merchantAccount": "AdyenTechSupport_VictorTang_TEST",
-    "countryCode": "HK",
+    "countryCode": "KR",
     "shopperLocale": "en_US",
     "amount": {
       "currency": "HKD",
